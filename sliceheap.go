@@ -3,6 +3,9 @@
 //
 // This package is for that rare time when you need a heap and do not want to
 // make an arbitrary type to provide Push and Pop.
+//
+// To further aid in making life easier, the heap can be quickly populated from
+// a map, slice, or array with the PushKeys or PushValues functions.
 package sliceheap
 
 import (
@@ -65,4 +68,36 @@ func (h Heap) Pop() interface{} {
 	last := slice.Index(len - 1)
 	slice.SetLen(len - 1)
 	return last.Interface()
+}
+
+// PushKeys pushes all keys of a map into the heap.
+//
+// This can be used for quickly populating the heap from a map.
+func (h Heap) PushKeys(m interface{}) {
+	iter := reflect.ValueOf(m).MapRange()
+	for iter.Next() {
+		heap.Push(h, iter.Key().Interface())
+	}
+}
+
+// PushValues pushes all values of either a map, array, or slice into the
+// heap.
+//
+// This can be used for quickly populating the heap from a map or from
+// a slice / array that you do not want to modify.
+func (h Heap) PushValues(t interface{}) {
+	tv := reflect.ValueOf(t)
+	switch tv.Kind() {
+	case reflect.Map:
+		iter := tv.MapRange()
+		for iter.Next() {
+			heap.Push(h, iter.Value().Interface())
+		}
+	case reflect.Slice, reflect.Array:
+		for i := tv.Len() - 1; i >= 0; i-- {
+			heap.Push(h, tv.Index(i).Interface())
+		}
+	default:
+		panic("unsupported push kind " + tv.Kind().String())
+	}
 }
