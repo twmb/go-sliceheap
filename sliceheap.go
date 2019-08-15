@@ -43,7 +43,12 @@ func (h Heap) Pointer() interface{} {
 // Peek returns a pointer to the element at index 0 in the heap, corresponding
 // to the current smallest value.
 func (h Heap) Peek() interface{} {
-	return reflect.Indirect(h.slicePtr).Index(0).Addr().Interface()
+	return h.PeekAt(0)
+}
+
+// PeekAt returns a pointer to the element at the requested index in the heap.
+func (h Heap) PeekAt(idx int) interface{} {
+	return reflect.Indirect(h.slicePtr).Index(idx).Addr().Interface()
 }
 
 // Swap swaps two elements in the slice.
