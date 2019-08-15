@@ -1,17 +1,12 @@
-// Package sliceheap returns a quick heap given a pointer to a slice and a less
-// function (akin to sort.Slice for sorting slices).
+// Package sliceheap returns a quick heap interface implementation given a
+// pointer to a slice and a less function (akin to sort.Slice for sorting
+// slices).
 //
 // This package is for that rare time when you need a heap and do not want to
 // make an arbitrary type to provide Push and Pop.
-//
-// To further aid in making life easier, the heap can be quickly populated from
-// a map, slice, or array with the PushKeys or PushValues functions.
 package sliceheap
 
-import (
-	"container/heap"
-	"reflect"
-)
+import "reflect"
 
 // Heap is a heap on a slice.
 type Heap struct {
@@ -19,20 +14,36 @@ type Heap struct {
 	less     func(i, j int) bool
 }
 
-// On returns a heap on a pointer to a slice, initializing the heap before
-// returning.
+// On returns a heap on a pointer to a slice.
+//
+// The heap is not initialized before returning.
 func On(slicePtr interface{}, less func(i, j int) bool) Heap {
 	h := Heap{
 		slicePtr: reflect.ValueOf(slicePtr),
 		less:     less,
 	}
-	heap.Init(h)
 	return h
 }
 
-// Slice returns the backing slice the heap is on.
-func (h Heap) Slice() interface{} {
+// View returns the backing slice the heap is on.
+//
+// Note that this slice is invalidated after any Push or Pop call, thus, it is
+// only a view of the current slice.
+func (h Heap) View() interface{} {
 	return reflect.Indirect(h.slicePtr).Interface()
+}
+
+// Pointer returns a pointer to the backing slice the heap is on.
+//
+// Changes to the heap can be seen by dereferencing the pointer.
+func (h Heap) Pointer() interface{} {
+	return h.slicePtr.Interface()
+}
+
+// Peek returns the element at index 0 in the heap, corresponding to the
+// current smallest value.
+func (h Heap) Peek() interface{} {
+	return reflect.Indirect(h.slicePtr).Index(0).Interface()
 }
 
 // Swap swaps two elements in the slice.
@@ -68,36 +79,4 @@ func (h Heap) Pop() interface{} {
 	last := slice.Index(len - 1)
 	slice.SetLen(len - 1)
 	return last.Interface()
-}
-
-// PushKeys pushes all keys of a map into the heap.
-//
-// This can be used for quickly populating the heap from a map.
-func (h Heap) PushKeys(m interface{}) {
-	iter := reflect.ValueOf(m).MapRange()
-	for iter.Next() {
-		heap.Push(h, iter.Key().Interface())
-	}
-}
-
-// PushValues pushes all values of either a map, array, or slice into the
-// heap.
-//
-// This can be used for quickly populating the heap from a map or from
-// a slice / array that you do not want to modify.
-func (h Heap) PushValues(t interface{}) {
-	tv := reflect.ValueOf(t)
-	switch tv.Kind() {
-	case reflect.Map:
-		iter := tv.MapRange()
-		for iter.Next() {
-			heap.Push(h, iter.Value().Interface())
-		}
-	case reflect.Slice, reflect.Array:
-		for i := tv.Len() - 1; i >= 0; i-- {
-			heap.Push(h, tv.Index(i).Interface())
-		}
-	default:
-		panic("unsupported push kind " + tv.Kind().String())
-	}
 }

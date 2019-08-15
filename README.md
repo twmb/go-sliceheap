@@ -7,9 +7,6 @@ function (akin to sort.Slice for sorting slices).
 This package is for that rare time when you need a heap and do not want to make
 an arbitrary type to provide `Push` and `Pop`.
 
-To further aid in making life easier, the heap can be quickly populated from a
-map, slice, or array with the PushKeys or PushValues functions.
-
 Documentation
 -------------
 
@@ -22,7 +19,9 @@ Example
 // we can create heap in one function and return it.
 inner := func() sliceheap.Heap {
 	a := []int{3, 2, 4, 5, 1, 0, 6}
-	return sliceheap.On(&a, func(i, j int) bool { return a[i] > a[j] })
+	h := sliceheap.On(&a, func(i, j int) bool { return a[i] > a[j] })
+        heap.Init(h)
+        return h
 }
 h := inner()
 // We can see the heap sort itself by checking the backing slice.
