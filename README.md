@@ -25,9 +25,19 @@ inner := func() sliceheap.Heap {
 }
 h := inner()
 // We can see the heap sort itself by checking the backing slice.
-fmt.Println(h.Slice().([]int)) // prints [6 5 4 2 1 0 3]
+fmt.Println(h.View().([]int)) // prints [6 5 4 2 1 0 3]
 // Push a few more elements.
 heap.Push(h, 8)
+
+// If we want to observe pushes and pops from the slice, we must save a
+// pointer to the slice. This is only necessary if working on a slice
+// that you did not pass directly to sliceheap.On, i.e., you have lost
+// the original pointer you used.
+ptr := h.Pointer().(*[]int)
+fmt.Println(*ptr)
+heap.Push(h, 7)
+fmt.Println(*ptr)
+
 heap.Push(h, 7)
 heap.Push(h, 9)
 // Pop everything off, printing as we pop largest to smallest.
