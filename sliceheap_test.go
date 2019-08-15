@@ -26,7 +26,7 @@ func TestOnAll(t *testing.T) {
 
 	exp := 0
 	for h.Len() > 0 {
-		peek := h.Peek().(int)
+		peek := *h.Peek().(*int)
 		if peek != exp {
 			t.Errorf("peek %d != exp %d", peek, exp)
 		}

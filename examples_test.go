@@ -60,3 +60,15 @@ func ExampleOn() {
 	// Output:
 	// 6
 }
+
+func ExampleHeap_Peek() {
+	a := []int{3, 1, 2}
+	h := sliceheap.On(&a, func(i, j int) bool { return a[i] < a[j] })
+	*h.Peek().(*int) = 4 // modify the first element
+	fmt.Println(a)
+	heap.Fix(h, 0) // and then fix its position
+	fmt.Println(a)
+	// Output:
+	// [4 1 2]
+	// [1 4 2]
+}
