@@ -26,10 +26,6 @@ func TestOnAll(t *testing.T) {
 
 	exp := 0
 	for h.Len() > 0 {
-		peek := *h.Peek().(*int)
-		if peek != exp {
-			t.Errorf("peek %d != exp %d", peek, exp)
-		}
 		got := heap.Pop(h).(int)
 		if got != exp {
 			t.Errorf("got %d != exp %d", got, exp)

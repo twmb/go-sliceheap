@@ -6,21 +6,19 @@
 // make an arbitrary type to provide Push and Pop.
 package sliceheap
 
-import "reflect"
-
 // Heap is a heap on a slice.
-type Heap struct {
-	slicePtr reflect.Value
-	less     func(i, j int) bool
+type Heap[T any] struct {
+	slice *[]T
+	less  func(i, j int) bool
 }
 
 // On returns a heap on a pointer to a slice.
 //
 // The heap is not initialized before returning.
-func On(slicePtr interface{}, less func(i, j int) bool) Heap {
-	h := Heap{
-		slicePtr: reflect.ValueOf(slicePtr),
-		less:     less,
+func On[T any](slice *[]T, less func(i, j int) bool) Heap[T] {
+	h := Heap[T]{
+		slice: slice,
+		less:  less,
 	}
 	return h
 }
@@ -29,59 +27,42 @@ func On(slicePtr interface{}, less func(i, j int) bool) Heap {
 //
 // Note that this slice is invalidated after any Push or Pop call, thus, it is
 // only a view of the current slice.
-func (h Heap) View() interface{} {
-	return reflect.Indirect(h.slicePtr).Interface()
+func (h Heap[T]) View() []T {
+	return *h.slice
 }
 
 // Pointer returns a pointer to the backing slice the heap is on.
 //
 // Changes to the heap can be seen by dereferencing the pointer.
-func (h Heap) Pointer() interface{} {
-	return h.slicePtr.Interface()
-}
-
-// Peek returns a pointer to the element at index 0 in the heap, corresponding
-// to the current smallest value.
-func (h Heap) Peek() interface{} {
-	return h.PeekAt(0)
-}
-
-// PeekAt returns a pointer to the element at the requested index in the heap.
-func (h Heap) PeekAt(idx int) interface{} {
-	return reflect.Indirect(h.slicePtr).Index(idx).Addr().Interface()
+func (h Heap[T]) Pointer() *[]T {
+	return h.slice
 }
 
 // Swap swaps two elements in the slice.
-func (h Heap) Swap(i, j int) {
-	slice := reflect.Indirect(h.slicePtr)
-	l := slice.Index(i)
-	m := l.Interface() // copy out our value; the temporary middle
-	r := slice.Index(j)
-	l.Set(r)
-	r.Set(reflect.ValueOf(m))
+func (h Heap[T]) Swap(i, j int) {
+	v := *h.slice
+	v[i], v[j] = v[j], v[i]
 }
 
 // Len returns the current length of the slice.
-func (h Heap) Len() int {
-	return reflect.Indirect(h.slicePtr).Len()
+func (h Heap[T]) Len() int {
+	return len(*h.slice)
 }
 
 // Less returns whether the element at i is less than the element at j.
-func (h Heap) Less(i, j int) bool {
+func (h Heap[T]) Less(i, j int) bool {
 	return h.less(i, j)
 }
 
 // Push pushes a new element onto the heap's backing slice.
-func (h Heap) Push(x interface{}) {
-	slice := reflect.Indirect(h.slicePtr)
-	slice.Set(reflect.Append(slice, reflect.ValueOf(x)))
+func (h Heap[T]) Push(x any) {
+	*h.slice = append(*h.slice, x.(T))
 }
 
 // Pop pops the smallest element off of the slice and returns it.
-func (h Heap) Pop() interface{} {
-	slice := reflect.Indirect(h.slicePtr)
-	len := slice.Len()
-	last := slice.Index(len - 1)
-	slice.SetLen(len - 1)
-	return last.Interface()
+func (h Heap[T]) Pop() any {
+	v := *h.slice
+	x := v[len(v)-1]
+	*h.slice = v[:len(v)-1]
+	return x
 }
